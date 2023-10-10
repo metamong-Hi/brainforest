@@ -1,0 +1,61 @@
+/* header */
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap");
+@import url(//fonts.googleapis.com/earlyaccess/nanumgothic.css);
+
+html,
+body {
+  font-family: "Nanum Gothic", sans-serif;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+}
+a:link {
+  color: #4a4a4a;
+  font-weight: 600;
+  text-decoration: none;
+}
+a:visited {
+  color: #4a4a4a;
+  font-weight: 600;
+  text-decoration: none;
+}
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.navbar-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 50px;
+  margin-right: 10px;
+}
+.navbar-item {
+  padding: 10px;
+}
+#navbar {
+  width: 450px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  font-size: 18px;
+}
+.navbar-item a:hover {
+  color: #0ca789;
+  cursor: pointer;
+}
+.title-text {
+  font-size: 50px;
+  font-family: "Fredoka", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  word-break: normal;
+  color: #0ca789;
+}
+.title-container {
+  margin-top: 20px;
+  margin-left: 20px;
+}
