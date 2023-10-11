@@ -16,12 +16,23 @@ users_collection = db["jungle_users"]
 posts_collection = db["jungle_posts"]
 
 # 엑셀 파일에서 'id', 'name' 정보 가져오기
-df = pd.read_excel("Jungle_DB.xlsx")
+df = pd.read_excel(r"C:\Users\으훈\KraftonJungle\brainforest\backend\Jungle_DB.xlsx")
+
 allowed_users = df[['id', 'name']].to_dict(orient='records')
 
 @app.route('/api/v1/signup', methods=['POST'])
 def signup_route():
     return signup_func(users_collection, allowed_users)
+
+@app.route('/')
+def index():
+    # 루트 경로에 대한 처리
+    return "Welcome to the homepage"
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return "페이지를 찾을 수 없습니다. 요청한 URL이 잘못되었을 수 있습니다.", 404
 
 # 블루프린트 등록
 app.register_blueprint(login.login_bp)
@@ -35,4 +46,4 @@ app.register_blueprint(view_most_liked_posts.view_most_liked_posts_bp)
 app.register_blueprint(view_recent_posts.view_recent_posts_bp)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, threaded=False)
