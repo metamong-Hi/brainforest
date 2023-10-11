@@ -13,6 +13,6 @@ def create_post(posts_collection, app):
 
     result = posts_collection.insert_one(post_data)
     if result:
-        return jsonify({"message": "Post created", "post_id": str(result.inserted_id)}), 201
+        return jsonify({"postId": str(result.inserted_id)}), 201
     else:
-        return jsonify({"message": "Failed to create post"}), 500
+        return jsonify({"message": "게시물 생성에 실패하였습니다."}), 500
