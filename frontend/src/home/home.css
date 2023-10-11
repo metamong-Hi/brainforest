@@ -9,7 +9,7 @@ body {
   align-items: center;
   margin: 0;
   padding: 0;
-  background-color: #fff;
+  background-color: #495057;
 }
 a:link {
   color: #495057;
@@ -30,6 +30,8 @@ a:visited {
 main {
   height: auto;
   min-height: 100%;
+  /* background-image: url("../../image/tree.PNG"); */
+  background-color: #495057;
 }
 .carousel-inner {
   height: 600px;
