@@ -1,23 +1,54 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import check_password_hash
 import jwt
 import datetime
+import pymongo
+import logging
 
+# 데이터베이스 연결 전역 변수로 선언
+mongo_client = pymongo.MongoClient("localhost", 27017)
+db = mongo_client["jungle_db"]
+users_collection = db["jungle_users"]
+
+# Blueprint 초기화 및 로그 설정
 login_bp = Blueprint('login', __name__)
+logger = logging.getLogger(__name__)  # 로거 생성
 
+# 라우트 설정
 @login_bp.route('/api/v1/login', methods=['POST'])
-def login(users_collection, app):
-    user_id = request.json.get('id')  # 'email'을 'id'로 변경
-    password = request.json.get('password')
+def login():
+    user_id = request.form.get('id')
+    password = request.form.get('password')
+    
+    # Request 로깅
+    logger.info(f"Received ID: {user_id}, Password: {password}")
+    
+    user = users_collection.find_one({"id": user_id})
+    
+    # MongoDB 쿼리 로깅
+    if user:
+        logger.info(f"Found user: {user['id']}")
+    else:
+        logger.warning("No user found in the database.")
+    
+    if not user:
+        logger.error("아이디를 찾을 수 없습니다.")
+        return jsonify({"message": "아이디를 찾을 수 없습니다."}), 401
 
-    user = users_collection.find_one({"id": user_id})  # 'email'을 'id'로 변경
+    if not password:
+        logger.error("비밀번호를 입력해주세요.")
+        return jsonify({"message": "비밀번호를 입력해주세요."}), 401
 
-    if not user or not check_password_hash(user['password'], password):
-        return jsonify({"message": "아이디 또는 비밀번호가 잘못되었습니다"}), 401  # 메시지도 약간 수정
+    if not check_password_hash(user['password'], password):
+        logger.error("비밀번호가 잘못되었습니다.")
+        return jsonify({"message": "비밀번호가 잘못되었습니다."}), 401
 
+    # current_app을 사용하여 앱 설정에 접근
     token = jwt.encode({
         'user_id': user["id"],
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-    }, app.config['SECRET_KEY'])
+    }, current_app.config['SECRET_KEY'])
 
-    return jsonify({"token": token, "name": user["name"]}), 200
+    # 로그인 성공 메시지 반환
+    logger.info("로그인 성공")
+    return jsonify({"message": "로그인 하였습니다.", "token": token, "name": user["name"]}), 200
