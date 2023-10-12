@@ -52,4 +52,3 @@ app.register_blueprint(view_recent_posts.view_recent_posts_bp)
 if __name__ == '__main__':
     initialize_db()  # 데이터베이스 초기화
     app.run(debug=True, threaded=False)
-
