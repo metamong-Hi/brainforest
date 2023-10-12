@@ -54,11 +54,10 @@ likes_collection = db["LIKES"]
 
 # 엑셀 파일에서 'id', 'name' 정보 가져오기
 df = pd.read_excel(r"C:\Users\으훈\KraftonJungle\brainforest\backend\Jungle_DB.xlsx")
-allowed_users = df[['id', 'name']].to_dict(orient='records')
 
 @app.route('/api/v1/signup', methods=['POST'])
 def signup_route():
-    return signup_func(users_collection, allowed_users)
+    return signup_func()
 
 @app.route('/')
 def index():
