@@ -6,7 +6,7 @@ create_post_bp = Blueprint('create_post', __name__)
 def create_post(posts_collection, users_collection):
     post_data = request.json
     user_id = post_data['userId']
-    
+    print('/post 받았습니다')
     post_data['like'] = 0
 
     # 게시물을 POSTS 컬렉션에 추가
@@ -20,7 +20,7 @@ def create_post(posts_collection, users_collection):
             {"_id": user_id},
             {"$push": {"posts": result.inserted_id}}
         ) 
-        print(post_data)
+        print("(게시글작성)", post_data)
         return jsonify({"postId": str(result.inserted_id)}), 201
     else:
         return jsonify({"message": "게시물 생성에 실패하였습니다."}), 500
