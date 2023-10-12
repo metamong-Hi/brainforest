@@ -28,7 +28,7 @@ def signup_route():
 
 @app.route('/')
 def index():
-    # 루트 경로에 대한 처리
+    print("접속됨")
     return "!! Welcome to the homepage"
 
 

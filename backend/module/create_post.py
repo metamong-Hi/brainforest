@@ -20,6 +20,7 @@ def create_post(posts_collection, users_collection):
             {"_id": user_id},
             {"$push": {"posts": result.inserted_id}}
         ) 
+        print(post_data)
         return jsonify({"postId": str(result.inserted_id)}), 201
     else:
         return jsonify({"message": "게시물 생성에 실패하였습니다."}), 500
