@@ -5,7 +5,7 @@ def signup(users_collection, allowed_users):
     user_id = request.json.get('id')
     password = request.json.get('password')
     name = request.json.get('name')
-    
+
     # 사용자가 이미 존재하는지 확인
     existing_user = users_collection.find_one({"id": user_id})
 

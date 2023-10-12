@@ -11,12 +11,13 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 
 # MongoDB 설정
 client = MongoClient("mongodb://localhost:27017/")
-db = client["jungle_db"]
-users_collection = db["jungle_users"]
-posts_collection = db["jungle_posts"]
+db = client["junglePedia1"]
+users_collection = db["USERS"]
+posts_collection = db["POSTS"]
+likes_collection = db["LIKES"]
 
 # 엑셀 파일에서 'id', 'name' 정보 가져오기
-df = pd.read_excel(r"C:\Users\으훈\KraftonJungle\brainforest\backend\Jungle_DB.xlsx")
+df = pd.read_excel("/Users/juyeongkim/Desktop/Software/Jungle/week0_miniProject/brainforest/backend/Jungle_DB.xlsx")
 
 allowed_users = df[['id', 'name']].to_dict(orient='records')
 
@@ -24,10 +25,11 @@ allowed_users = df[['id', 'name']].to_dict(orient='records')
 def signup_route():
     return signup_func(users_collection, allowed_users)
 
+
 @app.route('/')
 def index():
     # 루트 경로에 대한 처리
-    return "Welcome to the homepage"
+    return "!! Welcome to the homepage"
 
 
 @app.errorhandler(404)
@@ -45,5 +47,9 @@ app.register_blueprint(update_post.update_post_bp)
 app.register_blueprint(view_most_liked_posts.view_most_liked_posts_bp)
 app.register_blueprint(view_recent_posts.view_recent_posts_bp)
 
+# if __name__ == '__main__':
+#     app.run(debug=True, threaded=False)
 if __name__ == '__main__':
+    initialize_db()  # 데이터베이스 초기화
     app.run(debug=True, threaded=False)
+
