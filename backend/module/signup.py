@@ -1,7 +1,16 @@
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from werkzeug.security import generate_password_hash
+from pymongo import MongoClient
 
-def signup(users_collection, allowed_users):
+# MongoDB 설정
+client = MongoClient("mongodb://localhost:27017/")
+db = client["junglePedia1"]
+users_collection = db["USERS"]
+posts_collection = db["POSTS"]
+likes_collection = db["LIKES"]
+
+
+def signup():
     user_id = request.json.get('id')
     password = request.json.get('password')
     name = request.json.get('name')
