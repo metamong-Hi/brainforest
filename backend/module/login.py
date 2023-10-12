@@ -1,54 +1,54 @@
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import check_password_hash
 import jwt
-import datetime
-import pymongo
+from datetime import datetime, timedelta
 import logging
-
-# 데이터베이스 연결 전역 변수로 선언
-mongo_client = pymongo.MongoClient("localhost", 27017)
-db = mongo_client["jungle_db"]
-users_collection = db["jungle_users"]
 
 # Blueprint 초기화 및 로그 설정
 login_bp = Blueprint('login', __name__)
 logger = logging.getLogger(__name__)  # 로거 생성
 
-# 라우트 설정
+SECRET_KEY = 'your_secret_key_for_jwt'
+
 @login_bp.route('/api/v1/login', methods=['POST'])
 def login():
+    users_collection = current_app.config['USERS_COLLECTION']
+    
     user_id = request.form.get('id')
     password = request.form.get('password')
     
-    # Request 로깅
-    logger.info(f"Received ID: {user_id}, Password: {password}")
+    # POST로 받은 'id'와 'password'를 먼저 출력
+    logger.warning(f"Received id: {user_id}, password: {password}")
     
-    user = users_collection.find_one({"id": user_id})
+    if user_id is None or password is None or user_id.strip() == '' or password.strip() == '':
+        logger.warning("받은 값이 없습니다.")
+        return jsonify({"message": "받은 값이 없습니다."}), 400
     
-    # MongoDB 쿼리 로깅
-    if user:
-        logger.info(f"Found user: {user['id']}")
+    # 모든 'id' 값 가져오기
+    all_ids = [user['id'] for user in users_collection.find({}, {"id": 1})]
+    
+    # 입력받은 'id' 값이 DB에 있는 'id' 리스트에 있는지 확인
+    if user_id not in all_ids:
+        logger.warning("입력된 id가 DB에 존재하지 않습니다.")
+        return jsonify({"message": "아이디가 틀렸습니다."}), 401
     else:
-        logger.warning("No user found in the database.")
+        logger.warning("id가 있습니다.")  # 'id'가 존재할 경우 로그에 기록
     
-    if not user:
-        logger.error("아이디를 찾을 수 없습니다.")
-        return jsonify({"message": "아이디를 찾을 수 없습니다."}), 401
+    # 해당 'id' 값을 가진 사용자 검색
+    user = users_collection.find_one({"id": user_id})
 
-    if not password:
-        logger.error("비밀번호를 입력해주세요.")
-        return jsonify({"message": "비밀번호를 입력해주세요."}), 401
+    # 사용자의 비밀번호와 제공된 비밀번호가 일치하는지 확인
+    stored_password_hash = user.get('password', '')
+    if not check_password_hash(stored_password_hash, password):
+        logger.warning("Incorrect password provided.")
+        return jsonify({"message": "비밀번호가 틀렸습니다."}), 401
 
-    if not check_password_hash(user['password'], password):
-        logger.error("비밀번호가 잘못되었습니다.")
-        return jsonify({"message": "비밀번호가 잘못되었습니다."}), 401
-
-    # current_app을 사용하여 앱 설정에 접근
-    token = jwt.encode({
-        'user_id': user["id"],
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-    }, current_app.config['SECRET_KEY'])
-
-    # 로그인 성공 메시지 반환
+    # 로그인 성공 시 JWT 토큰 생성
+    payload = {
+        'user_id': user_id,
+        'exp': datetime.utcnow() + timedelta(days=1)  # 1일 뒤에 만료
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    
     logger.info("로그인 성공")
-    return jsonify({"message": "로그인 하였습니다.", "token": token, "name": user["name"]}), 200
+    return jsonify({"message": "로그인 성공", "token": token, "id_message": "id가 있습니다."}), 200
