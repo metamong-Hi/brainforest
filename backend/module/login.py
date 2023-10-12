@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash
+from pymongo import MongoClient
 import jwt
 from datetime import datetime, timedelta
 import logging
@@ -10,45 +11,42 @@ logger = logging.getLogger(__name__)  # 로거 생성
 
 SECRET_KEY = 'your_secret_key_for_jwt'
 
+# MongoDB 연결 설정
+client = MongoClient("mongodb://localhost:27017/")
+db = client["jungle_db"]
+users_collection = db["USERS"]
+posts_collection = db["POSTS"]
+likes_collection = db["LIKES"]
+
 @login_bp.route('/api/v1/login', methods=['POST'])
-def login():
-    users_collection = current_app.config['USERS_COLLECTION']
+def merged_api_login_korean_comments():
+    id_receive = request.json.get('id')
+    pw_receive = request.json.get('password')
     
-    user_id = request.form.get('id')
-    password = request.form.get('password')
+    logger.warning("id 및 password를 받았습니다.")
+    print(id_receive, pw_receive)
+
+    # 사용자로부터 받은 id 로깅 (비밀번호 로깅은 보안상 제외)
+    logger.warning(f"받은 id: {id_receive}")  
     
-    # POST로 받은 'id'와 'password'를 먼저 출력
-    logger.warning(f"Received id: {user_id}, password: {password}")
-    
-    if user_id is None or password is None or user_id.strip() == '' or password.strip() == '':
+    if not id_receive or not pw_receive:
         logger.warning("받은 값이 없습니다.")
-        return jsonify({"message": "받은 값이 없습니다."}), 400
+        return jsonify({'result': 'fail', 'msg': '아이디 또는 비밀번호 정보가 제공되지 않았습니다.'}), 400
     
-    # 모든 'id' 값 가져오기
-    all_ids = [user['id'] for user in users_collection.find({}, {"id": 1})]
-    
-    # 입력받은 'id' 값이 DB에 있는 'id' 리스트에 있는지 확인
-    if user_id not in all_ids:
-        logger.warning("입력된 id가 DB에 존재하지 않습니다.")
-        return jsonify({"message": "아이디가 틀렸습니다."}), 401
+    # 주어진 'id'로 바로 사용자를 찾습니다.
+    user = users_collection.find_one({"id": id_receive})
+
+    # 사용자가 존재하는지, 제공된 비밀번호가 저장된 비밀번호 해시와 일치하는지 확인합니다.
+    if user and check_password_hash(user.get('password', ''), pw_receive):
+        # JWT 토큰 생성
+        payload = {
+            'id': id_receive,
+            'exp': datetime.utcnow() + timedelta(days=1)  # 토큰은 1일 후에 만료됩니다.
+        }
+        token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+        
+        logger.info("로그인 성공")
+        return jsonify({'result': 'success', 'token': token, 'message': '로그인 성공', 'id_message': 'id가 있습니다.'}), 200
     else:
-        logger.warning("id가 있습니다.")  # 'id'가 존재할 경우 로그에 기록
-    
-    # 해당 'id' 값을 가진 사용자 검색
-    user = users_collection.find_one({"id": user_id})
-
-    # 사용자의 비밀번호와 제공된 비밀번호가 일치하는지 확인
-    stored_password_hash = user.get('password', '')
-    if not check_password_hash(stored_password_hash, password):
-        logger.warning("Incorrect password provided.")
-        return jsonify({"message": "비밀번호가 틀렸습니다."}), 401
-
-    # 로그인 성공 시 JWT 토큰 생성
-    payload = {
-        'user_id': user_id,
-        'exp': datetime.utcnow() + timedelta(days=1)  # 1일 뒤에 만료
-    }
-    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-    
-    logger.info("로그인 성공")
-    return jsonify({"message": "로그인 성공", "token": token, "id_message": "id가 있습니다."}), 200
+        logger.warning("아이디/비밀번호가 일치하지 않습니다.")
+        return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'}), 401
