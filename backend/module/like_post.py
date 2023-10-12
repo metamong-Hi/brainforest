@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
-from bson import ObjectId
 from pymongo import MongoClient
+from bson import ObjectId
+import jwt
+from functools import wraps
 
-# MongoDB 연결 설정
 client = MongoClient("mongodb://localhost:27017/")
 db = client["jungle_db"]
 users_collection = db["USERS"]
@@ -11,25 +12,55 @@ likes_collection = db["LIKES"]
 
 like_post_bp = Blueprint('like_post', __name__)
 
+SECRET_KEY = 'your_secret_key_for_jwt'
+
+def is_valid_objectid(str_id):
+    """Check if a string is a valid ObjectId."""
+    try:
+        ObjectId(str_id)
+        return True
+    except:
+        return False
+
+def jwt_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].replace("Bearer ", "")
+
+        if not token:
+            return jsonify({"message": "토큰이 없습니다."}), 401
+
+        try:
+            data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            current_user = data['id']
+        except:
+            return jsonify({"message": "토큰이 유효하지 않습니다."}), 401
+
+        return f(current_user, *args, **kwargs)
+
+    return decorated
+
 @like_post_bp.route('/api/v1/like/<postId>', methods=['PUT'])
-def like_post(postId):
-    userId = str(request.json.get('userId'))  # ObjectId를 문자열로 변환
-    
+@jwt_required
+def like_post(current_user, postId):
+    if not is_valid_objectid(postId):
+        return jsonify({"message": "유효하지 않은 postId입니다."}), 400
+
+    userId = current_user
+
     post = posts_collection.find_one({"_id": ObjectId(postId)})
     if not post:
         return jsonify({"message": "게시물을 찾을 수 없습니다."}), 404
 
-    # 좋아요 정보를 찾는다
     like_data = likes_collection.find_one({"post_id": ObjectId(postId), "user_id": userId})
 
-    # 좋아요 취소
     if like_data:
         likes_collection.delete_one({"post_id": ObjectId(postId), "user_id": userId})
-        posts_collection.update_one({"_id": ObjectId(postId)}, {"$inc": {"like": -1}}) # 좋아요 수 감소
+        posts_collection.update_one({"_id": ObjectId(postId)}, {"$inc": {"like": -1}})
         return jsonify({"status": "unliked"}), 200
-
-    # 좋아요 등록
     else:
         likes_collection.insert_one({"post_id": ObjectId(postId), "user_id": userId})
-        posts_collection.update_one({"_id": ObjectId(postId)}, {"$inc": {"like": 1}}) # 좋아요 수 증가
+        posts_collection.update_one({"_id": ObjectId(postId)}, {"$inc": {"like": 1}})
         return jsonify({"status": "liked"}), 200

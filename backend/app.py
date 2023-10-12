@@ -7,6 +7,7 @@ from module import (login, logout, create_post, get_my_posts, delete_post,
                     like_post, update_post, view_most_liked_posts, view_recent_posts)
 from init_db import initialize_db
 from module.signup import signup as signup_func
+from flask_jwt_extended import JWTManager
 
 app = Flask(__name__)
 
@@ -26,6 +27,14 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 SECRET_KEY = 'your_secret_key'  # JWT 토큰과 Flask 앱 설정에 사용될 SECRET_KEY
+
+# Flask 앱 설정
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['JWT_SECRET_KEY'] = SECRET_KEY
+app.config['JWT_TOKEN_LOCATION'] = ['headers']  # 토큰 위치 설정
+
+# JWT 초기화
+jwt = JWTManager(app)
 
 @app.route('/api/v1/verify_token', methods=['POST'])
 def verify_token():
