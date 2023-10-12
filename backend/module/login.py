@@ -21,6 +21,7 @@ likes_collection = db["LIKES"]
 
 @login_bp.route('/api/v1/login', methods=['POST'])
 def login():
+    print('/api/v1/login 받았다 ------------------')
     id_receive = request.json.get('id')
     pw_receive = request.json.get('password')
     
@@ -38,6 +39,7 @@ def login():
     user = users_collection.find_one({"id": id_receive})
 
     # 사용자가 존재하는지, 제공된 비밀번호가 저장된 비밀번호 해시와 일치하는지 확인합니다.
+    # if user:
     if user and check_password_hash(user.get('password', ''), pw_receive):
         # JWT 토큰 생성
         payload = {
@@ -47,7 +49,14 @@ def login():
         token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
         
         logger.info("로그인 성공")
+        result = jsonify({'result': 'success', 'token': token, 'message': '로그인 성공', 'id_message': 'id가 있습니다.'})
+        print(result)
         return jsonify({'result': 'success', 'token': token, 'message': '로그인 성공', 'id_message': 'id가 있습니다.'}), 200
+        
+        # logger.info("로그인 성공")
+        # result = jsonify({'result': 'success', 'message': '로그인 성공', 'id_message': 'id가 있습니다.'})
+        # print(result)
+        # return jsonify({'result': 'success', 'message': '로그인 성공', 'id_message': 'id가 있습니다.'}), 200
     else:
         logger.warning(id_receive, pw_receive,">>>> 아이디/비밀번호가 일치하지 않습니다.")
         return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'}), 401

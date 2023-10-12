@@ -8,7 +8,13 @@ from module import (login, logout, create_post, get_my_posts, delete_post,
 from init_db import initialize_db
 from module.signup import signup as signup_func
 
-app = Flask(__name__, template_folder='/Users/juyeongkim/Desktop/Software/Jungle/week0_miniProject/brainforest/frontend/templates')
+# 임시
+from werkzeug.security import check_password_hash
+from datetime import datetime, timedelta
+import logging
+# 임시
+
+app = Flask(__name__, template_folder='../frontend/templates')
 
 ####################################
 # 로거 생성 및 설정
@@ -55,13 +61,43 @@ users_collection = db["USERS"]
 posts_collection = db["POSTS"]
 likes_collection = db["LIKES"]
 
-@app.route('/api/v1/signup', methods=['POST'])
-def signup_route():
-    return signup_func()
 
+###########
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/home')
+def home():
+    return render_template('home.html')
+
+@app.route('/signin')
+def signin():
+    print('<<<<<<<<< signin GET 호출 >>>>>>>>>>>>')
+    return render_template('signin.html')
+
+@app.route('/register')
+def register():
+    return render_template('register.html')
+
+@app.route('/mypage')
+def mypage():
+    return render_template('mypage.html')
+
+@app.route('/post')
+def post():
+    return render_template('post.html')
+
+@app.route('/week1')
+def week1():
+    return render_template('week1.html')
+
+
+############
+
+@app.route('/api/v1/signup', methods=['POST'])
+def signup_route():
+    return signup_func()
 
 @app.errorhandler(404)
 def page_not_found(e):

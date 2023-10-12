@@ -33,6 +33,7 @@ def signup():
 
     # 비밀번호를 'scrypt' 방식으로 해시화
     hashed_pw = generate_password_hash(password, method='scrypt')
+    print(hashed_pw)
     
     # 사용자 데이터 업데이트
     users_collection.update_one(
